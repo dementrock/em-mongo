@@ -114,7 +114,7 @@ module EM::Mongo
     #   already exists or collection creation fails on the server.
     #
     # @return [EM::Mongo::RequestResponse] Calls back with the new collection
-    def create_collection(name)
+    def create_collection(name, opts = {})
       response = RequestResponse.new
       names_resp = collection_names
       names_resp.callback do |names|
@@ -125,6 +125,7 @@ module EM::Mongo
         # Create a new collection.
         oh = BSON::OrderedHash.new
         oh[:create] = name
+        oh.merge! opts
         cmd_resp = command(oh)
         cmd_resp.callback do |doc|
           if EM::Mongo::Support.ok?(doc)
@@ -302,7 +303,7 @@ module EM::Mongo
       check_response = opts.fetch(:check_response, true)
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
 
-      if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
+      if selector.size > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
